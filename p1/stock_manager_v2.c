@@ -5,6 +5,7 @@
 */
 
 #include <stdio.h>
+#include <strings.h>
 
 /* Retirar comentario para ativar funcao 
    de debug, executada pelo carater 'D' */
@@ -31,7 +32,7 @@ typedef struct Produto {
        > Peso (int peso) - (> 0)
        > Quantidade em stock (int stock) - (>= 0) */
 
-    int preco, peso, stock;
+    int idp, preco, peso, stock;
     char descricao[MAX_DESCRICAO];
 } Produto;
 
@@ -65,6 +66,9 @@ struct Armazem {
 } armazem = {0};
 
 
+/* Criterio de ordenacao dos produtos */
+typedef enum {preco, descricao} criterio;
+
 /* Prototipo de funcoes */
 #ifdef DEBUG
     void debug();
@@ -89,8 +93,7 @@ int main() {
 
     int ch;
 
-    while (1) {
-        
+    while (1) {        
         /* le os comandos e executa-os */
         switch(ch = getchar()) {
 
@@ -164,16 +167,19 @@ int main() {
 void novo_produto() {
 
     int idp = armazem.num_produtos;
-    scanf(" %[^:]:%d:%d:%d", armazem.produtos[idp].descricao, &armazem.produtos[idp].preco,
-                             &armazem.produtos[idp].peso, &armazem.produtos[idp].stock);
-
+    scanf(" %[^:]:%d:%d:%d", armazem.produtos[idp].descricao, 
+                             &armazem.produtos[idp].preco,
+                             &armazem.produtos[idp].peso, 
+                             &armazem.produtos[idp].stock);
+    
+    armazem.produtos[idp].idp = idp;
     printf("Novo produto %d.\n", idp);
-    armazem.num_produtos++; 
+    armazem.num_produtos++;
 }
 
 /* Adiciona stock a um produto existente no sistema. */
 void add_stock() {
-             
+
     int idp, qtd;
     scanf(" %d:%d", &idp, &qtd);  
 
@@ -446,30 +452,51 @@ void lista_produtos_alfabeticamente_descricao() {
     
 }
 
-int particao(Produto p[], int lo, int hi) {
-    int i, pivot = p[lo].preco, left = lo;
+static void troca(Produto p[], int i, int j) {
+    Produto temp = p[i];
+    p[i] = p[j];
+    p[j] = temp;
+}
 
+int inferior(Produto a, Produto b, criterio c) {
+    switch(c) {
+
+        case preco:
+            /* se o preco for igual, ordena por idp crescente */
+            return ((a.preco < b.preco) || (a.preco == b.preco && a.idp < b.idp));
+
+        case descricao:
+            /* nega-se o resultado de strcmp para retornar positivo se for inferior */
+            return (strcmp(a.descricao, b.descricao) < 0 ? 1 : 0);
+
+        default:
+            return -1;
+    }
+}
+
+int particao(Produto p[], int lo, int hi, criterio c) {
+    int i, pivot = p[lo], barreira = lo;
+
+    /* elementos < pivo a esquerda e > pivo a direita*/
     for (i = lo + 1; i <= hi; i++) {
-        if (p[i].preco < pivot) {
-            troca(p[i], p[left]);
-            left++;
+        if (inferior(p[i], pivot, c)) {
+            barreira++;
+            troca(p, i, barreira);
         }
     }
 
-    troca(p[lo], p[left]);
-
-    return left;
+    troca(p, lo, barreira);
+    return barreira;
 }
 
-void quicksort(Produto p[], int lo, int hi) {
-    int index;
+void quicksort(Produto p[], int lo, int hi, criterio c) {
+    int pos_pivot;
     if (lo < hi) {
-        index = particao(p, lo, hi);
-        quicksort(p, lo, index);
-        quicksort(p, index + 1, hi);
+        pos_pivot = particao(p, lo, hi, c);
+        quicksort(p, lo, pos_pivot - 1, c);
+        quicksort(p, pos_pivot + 1, hi, c);
     }
 }
-
 
 
 /* Funcao de debug (chamada pelo comando 'D') */
@@ -495,6 +522,3 @@ void quicksort(Produto p[], int lo, int hi) {
         }
     }
 #endif
-
-
-
