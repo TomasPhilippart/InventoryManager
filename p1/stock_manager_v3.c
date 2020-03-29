@@ -1,22 +1,8 @@
 /*
     * Ficheiro: stock_manager.c
     * Autor: Tomas Philippart, aluno 95683
-    * Descricao: Programa
-*/
-
-#include <stdio.h>
-#include <string.h>
-
-/* Retirar comentario para ativar funcao 
-   de debug, executada pelo carater 'D' */
-#define DEBUG
-
-#define MAX_DESCRICAO 64
-#define MAX_PRODUTOS 10000
-#define MAX_ENCOMENDAS 500
-#define MAX_PESO 200
-
-/* ------------ MODELIZACAO DO PROBLEMA -------------- 
+    * 
+   ------------ MODELIZACAO DO PROBLEMA -------------- 
    Um Armazem contem uma lista de produtos e recebe encomendas.
    As encomendas contem uma lista de items, que referenciam os produtos.
    Decidi usar referencias, em vez de copiar os produtos, para garantir
@@ -27,7 +13,16 @@
    para permitir (hipoteticamente) apagar produtos sem alterar o seu id.
    Assim, o id e' fixo e independente da estrutura de dados. O unico
    inconveniente e que obriga a procurar o indice, dado o idp, 
-   sacrificando desempenho por facilidade de manutencao do codigo. */
+   sacrificando desempenho por facilidade de manutencao do codigo. 
+*/
+
+#include <stdio.h>
+#include <string.h>
+
+#define MAX_DESCRICAO 64
+#define MAX_PRODUTOS 10000
+#define MAX_ENCOMENDAS 500
+#define MAX_PESO 200
 
 
 /* ============================ Produto ============================*/
@@ -59,7 +54,7 @@ typedef struct Item {
 typedef struct Encomenda {
 
    /* Array items da encomenda */
-   Item items[MAX_PRODUTOS];
+   Item items[MAX_PESO];
 
    int peso, num_items_distintos;
 
@@ -87,15 +82,22 @@ struct Armazem {
 /* Criterio de ordenacao dos produtos */
 typedef enum {preco, descricao} criterio;
 
+
 /* Prototipo de funcoes */
-#ifdef DEBUG
-    void debug();
-#endif
+void debug();
+int indice_produto_armazem(int idp);
+int indice_produto_encomenda(int ide, int idp);
+void troca(Produto p[], int i, int j);
+int inferior(Produto a, Produto b, criterio c);
+int particao(Produto p[], int lo, int hi, criterio c);
+void quicksort(Produto p[], int lo, int hi, criterio c);
+void novo_prod_encomenda(int ide, int idp, int qtd, int indice);
 void novo_produto();
 void add_stock();
 void nova_encomenda();
 void add_prod_encomenda();
-void novo_prod_encomenda(int ide, int idp, int qtd, int indice);
+int copiar_produtos(Produto p[]);
+
 void remove_stock();
 void remove_prod_encomenda();
 void calcula_custo_encomenda();
@@ -114,12 +116,11 @@ int main() {
         
         /* le os comandos e executa-os */
         switch(ch = getchar()) {
-
-            #ifdef DEBUG
-                case 'D':
-                    debug();
-                    break;
-            #endif
+            /*
+            case 'D':
+                debug();
+                break;
+            */
 
             case 'a':
                 novo_produto();
@@ -181,7 +182,7 @@ int main() {
 
 /* ============================ Funcoes ============================*/
 
-/* ---------- Funcoes auxiliares ---------- */
+/* -------- Funcoes auxiliares de procura ---------- */
 
 /* Procura o indice do produto idp no armazem */
 int indice_produto_armazem(int idp) {
