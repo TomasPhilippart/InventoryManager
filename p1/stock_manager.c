@@ -1,8 +1,11 @@
 /*
     * Ficheiro: stock_manager.c
     * Autor: Tomas Philippart, aluno 95683
-    * 
-   ------------ MODELIZACAO DO PROBLEMA -------------- 
+    * Descricao: Sistema de Logistica que permite gerir
+                 stocks de produtos e encomendas.
+
+
+   ------------ MODELACAO DO PROBLEMA -------------- 
    Um Armazem contem uma lista de produtos e recebe encomendas.
    As encomendas contem uma lista de items, que referenciam os produtos.
    Decidi usar referencias, em vez de copiar os produtos, para garantir
@@ -84,7 +87,6 @@ typedef enum {preco, descricao} criterio;
 
 
 /* Prototipo de funcoes */
-void debug();
 int indice_produto_armazem(int idp);
 int indice_produto_encomenda(int ide, int idp);
 
@@ -116,11 +118,6 @@ int main() {
         
         /* le os comandos e executa-os */
         switch(ch = getchar()) {
-            /*
-            case 'D':
-                debug();
-                break;
-            */
 
             case 'a':
                 novo_produto();
@@ -187,11 +184,21 @@ int main() {
 /* Procura o indice do produto idp no armazem */
 int indice_produto_armazem(int idp) {
     int i;
-    for (i = 0; i < armazem.num_produtos; i++) {
+
+    /* comeca em idp por questoes de otimizacao */
+    for (i = idp; i < armazem.num_produtos; i++) {
         if (armazem.produtos[i].idp == idp) {
             return i;
         }
     }
+
+    /* verificar os produtos anteriores */ 
+    for (i = idp - 1; i > 0; i--) {
+        if (armazem.produtos[i].idp == idp) {
+            return i;
+        }
+    }
+
     /* nao encontrou o produto */
     return -1;
 }
@@ -199,6 +206,7 @@ int indice_produto_armazem(int idp) {
 /* Procura o indice do produto idp na encomenda ide */
 int indice_produto_encomenda(int ide, int idp) {
     int i;
+
     for (i = 0; i < armazem.encomendas[ide].num_items_distintos; i++) {
         if (armazem.encomendas[ide].items[i].idp == idp) {
             return i;
@@ -209,9 +217,12 @@ int indice_produto_encomenda(int ide, int idp) {
 }
 
 /* ---------- Quicksort ---------- */
-int inferior(Produto a, Produto b, criterio c) {
-    switch(c) {
 
+/* Funcao auxiliar para determinar se um produto
+    e inferior a outro, dado um criterio c */
+int inferior(Produto a, Produto b, criterio c) {
+    
+    switch(c) {
         case preco:
             /* se o preco for igual, ordena por idp crescente */
             return ((a.preco < b.preco) || (a.preco == b.preco && a.idp < b.idp));
@@ -225,12 +236,16 @@ int inferior(Produto a, Produto b, criterio c) {
     }
 }
 
+
+/* Funcao para ordenador produto p pelo criterio c*/
 void quicksort(Produto p[], int lo, int hi, criterio c) {
     int i, j;
     Produto pivot, temp;
     i = lo;
     j = hi;
-    pivot = p[(lo + hi) / 2]; 
+    
+    /* escolhe-se o elemento do meio como pivot */
+    pivot = p[(lo + hi) / 2];
     
     while (i <= j) {
         while (inferior(p[i], pivot, c) && i < hi) {
@@ -541,7 +556,7 @@ void lista_ide_max_produto() {
         printf("Maximo produto %d %d %d.\n", idp, ide_max_produto, max_quantidade);
 }
 
-/* copia os produtos do armazem e devolve o numero de produtos */
+/* func aux: copia os produtos do armazem e devolve o numero de produtos */
 int copiar_produtos(Produto p[]) {
     int i, len = armazem.num_produtos;
     for (i = 0; i < len; i++) {
@@ -611,30 +626,3 @@ void lista_produtos_alfabeticamente_descricao() {
         }
     }
 }
-
-
-/* Funcao de debug (chamada pelo comando 'D') */
-#ifdef DEBUG
-    void debug(){
-        int i, j, indice_prod, idp;
-
-        /* iterar pelas encomendas */
-        for(i = 0; i < armazem.num_encomendas ; i++){
-
-            printf("Encomenda %d\n",i);
-
-            /* iterar pelos produtos da encomenda */
-            for(j = 0; j < armazem.encomendas[i].num_items_distintos; j++){
-                idp = armazem.encomendas[i].items[j].idp;
-                indice_prod = indice_produto_armazem(idp);
-                printf("\tProduto:%d Descricao:%s Quantidade:%d\n", idp, 
-                        armazem.produtos[indice_prod].descricao, 
-                        armazem.encomendas[i].items[j].qtd);
-            }
-
-            printf("\tPeso:%d\n", armazem.encomendas[i].peso);
-
-            putchar('\n');
-        }
-    }
-#endif
