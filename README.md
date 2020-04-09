@@ -1,5 +1,3 @@
-# TomasPhilippart
-
 # Inventory Manager, project for Introduction to Algorithms & Data Structures class.
 
 O objectivo deste projeto é o desenvolvimento, em linguagem C, de um sistema de logística. A interacção com o programa deverá ocorrer através de um conjunto de linhas compostas por uma letra (comando) e um número de argumentos dependente do comando a executar. Os possíveis comandos são listados na Tabela seguinte e indicam as operações a executar.
